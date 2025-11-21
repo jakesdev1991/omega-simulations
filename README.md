@@ -35,9 +35,9 @@ The following simulations are included:
     *   *Goal*: Advanced dynamics with metabolic inequalities.
     *   *Features*: Tracks "Internal Information" vs "Environment Loss" to test the Omega Metabolic Inequality ($dI_{int}/dt > dI_{env}/dt$).
 
-6.  **Sim 6: Omega Suite** (`sim6_v16_omega.ipynb`)
+6.  **Sim 6: Omega Suite** (`sim6_v17_omega.ipynb`)
     *   *Goal*: The comprehensive suite.
-    *   *Features*: Combines Cosmology, Ringdown frequency shift analysis (gravitational waves), and local emergent gravity sandboxes.
+    *   *Features*: Combines Cosmology, Ringdown frequency shift analysis (gravitational waves), and local emergent gravity sandboxes. Updated to v17.
 
 ## The Paper
 
