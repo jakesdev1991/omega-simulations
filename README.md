@@ -39,6 +39,10 @@ The following simulations are included:
     *   *Goal*: The comprehensive suite.
     *   *Features*: Combines Cosmology, Ringdown frequency shift analysis (gravitational waves), and local emergent gravity sandboxes.
 
+7.  **Universe Lifecycle Model** (`source/universe_lifecycle_model.py`)
+    *   *Goal*: Provide a robust, end-to-end timeline from universe inception through late-time heat-death behavior.
+    *   *Features*: Integrates expansion history across radiation/matter/Λ eras, tracks horizon growth, temperature cooling, and entropy/information proxies, and emits checkpoint reports for key transitions.
+
 ## The Paper
 
 The theoretical basis for these simulations can be found in:
