@@ -31,6 +31,7 @@ from scipy.signal import hilbert
 from scipy.optimize import brentq
 from numpy.fft import rfft
 import warnings
+from universe_lifecycle_model import UniverseLifecycleModel
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # -------------------------
@@ -956,10 +957,30 @@ def run_sim3_disformal(RUN_DYNAMIC=True):
         )
         print("Sim 3: Saved dynamic run outputs to sim3_dynamic_run.npz")
 
+
+def run_universe_lifecycle_model():
+    """
+    Run the inception-to-heat-death lifecycle model and persist diagnostics.
+    """
+    lifecycle_model = UniverseLifecycleModel()
+    lifecycle_history = lifecycle_model.simulate()
+    checkpoints = lifecycle_model.epoch_report(lifecycle_history)
+    lifecycle_model.plot_summary(lifecycle_history, save_path="sim6_universe_lifecycle_summary.png")
+
+    np.savez("sim6_universe_lifecycle.npz", **lifecycle_history, **checkpoints)
+    print("Saved sim6_universe_lifecycle.npz and sim6_universe_lifecycle_summary.png")
+
+    print("Universe lifecycle checkpoints (Gyr):")
+    for key, value in checkpoints.items():
+        print(f"  {key}: {value:.6g}")
+
 # -------------------------
 # Main pipeline
 # -------------------------
 def main():
+    # 0) Inception-to-death lifecycle model
+    run_universe_lifecycle_model()
+
     # 1) Run cosmology
     params = {'alpha': alpha_def, 'kappa': kappa_def, 'gamma': gamma_guess_def,
               'Omega_m': OMEGA_M_FID, 'A0': A0_def, 'H0_SI': H0_SI_default}
