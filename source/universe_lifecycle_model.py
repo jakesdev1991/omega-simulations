@@ -41,6 +41,7 @@ class UniverseLifecycleModel:
     C_KM_S = 299792.458
     MPC_IN_KM = 3.085677581e19
     SEC_PER_GYR = 3.15576e16
+    C_MPC_PER_GYR = C_KM_S * SEC_PER_GYR / MPC_IN_KM
 
     def __init__(self, params: LifecycleParams | None = None):
         self.params = params or LifecycleParams()
@@ -96,8 +97,8 @@ class UniverseLifecycleModel:
         z = 1.0 / np.maximum(a, 1e-20) - 1.0
         t_hubble = 1.0 / np.maximum(h, 1e-20)
 
-        integrand = self.C_KM_S / np.maximum(a * h, 1e-20)
-        horizon_mpc = self._cumtrapz(integrand, t) / 3.085677581e16
+        integrand = self.C_MPC_PER_GYR / np.maximum(a * h, 1e-20)
+        horizon_mpc = self._cumtrapz(integrand, t)
 
         temp_k = p.t0_cmb_k / np.maximum(a, 1e-20)
         entropy_proxy = a**3 * temp_k**3
@@ -150,30 +151,41 @@ class UniverseLifecycleModel:
         }
 
     def plot_summary(self, history: Dict[str, np.ndarray], save_path: str = "universe_lifecycle_summary.png") -> None:
-        """Generate a 2x2 summary plot for lifecycle diagnostics."""
+        """Generate a polished 2x2 summary plot for lifecycle diagnostics."""
         t = history["t_gyr"]
-        fig, ax = plt.subplots(2, 2, figsize=(12, 8))
+        plt.style.use("dark_background")
+        fig, ax = plt.subplots(2, 2, figsize=(13, 8.5), constrained_layout=True)
+        fig.patch.set_facecolor("#0b1020")
 
-        ax[0, 0].loglog(t, history["a"], color="cyan")
-        ax[0, 0].set_title("Scale Factor a(t)")
+        ax[0, 0].loglog(t, history["a"], color="#4cc9f0", lw=2.2)
+        ax[0, 0].set_title("Scale Factor Evolution", color="white")
         ax[0, 0].set_xlabel("Time [Gyr]")
+        ax[0, 0].set_ylabel("a(t)")
 
-        ax[0, 1].loglog(t, history["temp_k"], color="orange")
-        ax[0, 1].set_title("CMB Temperature")
+        ax[0, 1].loglog(t, history["temp_k"], color="#fca311", lw=2.2)
+        ax[0, 1].set_title("CMB Temperature Cooling", color="white")
         ax[0, 1].set_xlabel("Time [Gyr]")
+        ax[0, 1].set_ylabel("Temperature [K]")
 
-        ax[1, 0].loglog(t, history["rho_r"], label="Radiation")
-        ax[1, 0].loglog(t, history["rho_m"], label="Matter")
-        ax[1, 0].loglog(t, history["rho_lambda"], label="Dark energy")
-        ax[1, 0].set_title("Energy Components")
-        ax[1, 0].legend()
+        ax[1, 0].loglog(t, history["rho_r"], label="Radiation", color="#ff6b6b", lw=1.8)
+        ax[1, 0].loglog(t, history["rho_m"], label="Matter", color="#ffd166", lw=1.8)
+        ax[1, 0].loglog(t, history["rho_lambda"], label="Dark energy", color="#06d6a0", lw=1.8)
+        ax[1, 0].set_title("Energy Component Densities", color="white")
+        ax[1, 0].set_xlabel("Time [Gyr]")
+        ax[1, 0].set_ylabel("Relative Density")
+        ax[1, 0].legend(frameon=False, fontsize=9)
 
-        ax[1, 1].semilogx(t, history["info_proxy"], color="magenta")
-        ax[1, 1].set_title("Information Proxy")
+        ax[1, 1].semilogx(t, history["info_proxy"], color="#b5179e", lw=2.2)
+        ax[1, 1].set_title("Information Proxy", color="white")
         ax[1, 1].set_xlabel("Time [Gyr]")
+        ax[1, 1].set_ylabel("I_proxy")
 
-        plt.tight_layout()
-        plt.savefig(save_path, dpi=180)
+        for axis in ax.flat:
+            axis.grid(True, which="both", alpha=0.25, linestyle="--")
+            axis.set_facecolor("#111827")
+
+        fig.suptitle("Universe Lifecycle: Inception → Heat Death", fontsize=14, color="#e5e7eb")
+        plt.savefig(save_path, dpi=220, bbox_inches="tight")
         plt.close(fig)
 
 
