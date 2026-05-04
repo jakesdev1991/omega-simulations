@@ -31,7 +31,12 @@ from scipy.signal import hilbert
 from scipy.optimize import brentq
 from numpy.fft import rfft
 import warnings
-from universe_lifecycle_model import UniverseLifecycleModel
+from importlib import import_module
+
+if __package__:
+    UniverseLifecycleModel = import_module("source.universe_lifecycle_model").UniverseLifecycleModel
+else:
+    UniverseLifecycleModel = import_module("universe_lifecycle_model").UniverseLifecycleModel
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # -------------------------
