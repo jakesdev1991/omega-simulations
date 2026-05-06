@@ -4,6 +4,18 @@
 
 This repository contains a suite of physics simulations and theoretical papers related to the **Omega Protocol**: a unified theory positing that reality is a network of informational correlations, where geometry, gravity, and cosmology emerge from information processing.
 
+## Upgrade: Omega Protocol v3.1-ULTIMATE
+
+The simulation suite now includes a dedicated **v3.1-ULTIMATE diagnostic layer** in `source/sim6_v16_omega.py` that adds:
+
+- Informational stiffness proxy \(I_{\mu\nu}\)-inspired scalar diagnostics.
+- A fixed vacuum-discord anchor of **3.33 bits**.
+- Complex-Wick shredding phase tracking \(\psi_{\text{shred}} = \arg(RCOD/COD - 0.92)\).
+- A topological-\(\Lambda\) quantization proxy for the Chern-class integer \(n\).
+
+When running Sim 6, these appear in the generated artifact:
+- `sim6_v16_ultimate_diagnostics.png`
+
 ## Repository Structure
 
 - **`notebooks/`**: Jupyter Notebooks for each simulation. This is the best place to explore the models interactively.
@@ -37,7 +49,7 @@ The following simulations are included:
 
 6.  **Sim 6: Omega Suite** (`sim6_v16_omega.ipynb`)
     *   *Goal*: The comprehensive suite.
-    *   *Features*: Combines Cosmology, Ringdown frequency shift analysis (gravitational waves), and local emergent gravity sandboxes.
+    *   *Features*: Combines Cosmology, Ringdown frequency shift analysis (gravitational waves), local emergent gravity sandboxes, and v3.1-ULTIMATE diagnostics.
 
 ## The Paper
 

@@ -11,6 +11,8 @@ Features:
 - Depletion cosmology with Omega Depletion Law (u = ln I).
 - Explicit Omega objects: Chain Overlap Density (Φ̄), dynamic Planck length ℓP(Φ̄).
 - "Distance = Correlation Deficit" metric d_info(z).
+- v3.1-ULTIMATE diagnostics: informational stiffness, 3.33-bit vacuum discord anchor,
+  complex-Wick phase, and topological-Λ quantization proxy.
 - BH horizon area proxy A_BH(z) from BHARD proxy.
 - Maps A_BH → BH mass change → QNM f(t) drift (ringdown).
 - Sim 5 v1: 1D Φ-field with emergent geometry, inertia-as-latency, local BH area growth
@@ -51,6 +53,9 @@ c_km_s = 299792.458
 hbar = 1.054571817e-34           # J*s
 lP0_SI = np.sqrt(hbar * G / c**3)  # Planck length (meters)
 phi_c_def = 0.1                  # critical COD scale in ℓ_P(Φ); tunable
+S0_MIN_TYPE_III1 = np.log(3.0)   # v3.1: minimal Type III1 entropy
+VACUUM_DISCORD_BITS = 10.0 / 3.0
+SMITH_LIMIT_RATIO = 0.92
 
 def phi_bar_from_I(I, I_init):
     """
@@ -67,6 +72,45 @@ def ellP_of_phi(phi_bar, phi_c=phi_c_def, lP0=lP0_SI):
     """
     phi_bar = np.asarray(phi_bar)
     return lP0 * np.exp((1.0 - phi_bar) / phi_c)
+
+def compute_ultimate_diagnostics(z_grid, t_grid, u_grid, phi_bar, d_info_m):
+    """
+    Omega Protocol v3.1-ULTIMATE diagnostic terms.
+    These are numerically stable toy proxies used for simulation reporting:
+      - informational stiffness scalar I(z) ~ d²S_rel / dt² surrogate
+      - complex Wick phase ψ_shred = arg(RCOD/COD - 0.92)
+      - topological Λ quantization index n(z) using S0 = ln 3
+    """
+    # Use u=ln(I) as relative-entropy proxy in this simulation layer.
+    du_dt = np.gradient(u_grid, t_grid)
+    d2u_dt2 = np.gradient(du_dt, t_grid)
+    I_stiff = np.abs(d2u_dt2) / np.maximum(np.abs(du_dt), 1e-12)
+
+    # RCOD proxy from informational metric gradient.
+    grad_d = np.gradient(d_info_m, z_grid)
+    rcod = np.clip(np.abs(grad_d) / np.maximum(np.max(np.abs(grad_d)), 1e-12), 1e-12, None)
+    cod = np.clip(phi_bar, 1e-12, 1.0)
+
+    ratio = rcod / cod
+    psi_shred = np.angle(ratio - SMITH_LIMIT_RATIO + 0j)
+    eta_complex = np.exp(1j * psi_shred)
+
+    # Topological-Λ proxy: n = Λ G / π * (S0/ħ)^2, rearranged from v3.1 theorem.
+    # Here Λ_eff is represented by stiffness scale in 1/m² units.
+    lambda_eff = I_stiff / np.maximum(d_info_m**2, 1e-30)
+    n_topological = (lambda_eff * G / np.pi) * (S0_MIN_TYPE_III1 / hbar) ** 2
+
+    return {
+        'I_stiff': I_stiff,
+        'rcod': rcod,
+        'cod': cod,
+        'psi_shred': psi_shred,
+        'eta_real': np.real(eta_complex),
+        'eta_imag': np.imag(eta_complex),
+        'lambda_eff': lambda_eff,
+        'n_topological': n_topological,
+        'vacuum_discord_bits': np.full_like(z_grid, VACUUM_DISCORD_BITS, dtype=float)
+    }
 
 # -------------------------
 # Cosmology / depletion model defaults
@@ -217,6 +261,14 @@ def compute_observables_from_solution(sol, params, zmax=8.0, nz=2000):
     d_info_m = ellP_bar * corr_deficit
     d_info_Mpc = d_info_m / (pc_in_m * 1e6)
 
+    ultimate = compute_ultimate_diagnostics(
+        z_grid=z_grid,
+        t_grid=t_grid,
+        u_grid=u_grid,
+        phi_bar=phi_bar,
+        d_info_m=d_info_m
+    )
+
     # A_BH history mapped to a_grid
     A_grid = A_BH_of_a(a_grid, A0=params['A0'])
     
@@ -229,7 +281,8 @@ def compute_observables_from_solution(sol, params, zmax=8.0, nz=2000):
         'H_km_s_Mpc': H_km_s_Mpc, 
         'w_eff': w_eff, 
         'chi_Mpc': chi, 'dL_Mpc': dL, 'mu': mu,
-        'A_BH': A_grid
+        'A_BH': A_grid,
+        **ultimate
     }
 
 # -------------------------
@@ -1062,7 +1115,42 @@ def main():
     plt.savefig("sim6_v16_omega_distance_metric.png", dpi=150)
     print("Saved sim6_v16_omega_distance_metric.png")
 
-    # 5) Cosmology summary
+    # 5) v3.1-ULTIMATE diagnostics summary
+    fig, axs = plt.subplots(2, 2, figsize=(11, 8))
+    axs[0, 0].plot(out['z'], out['I_stiff'])
+    axs[0, 0].invert_xaxis()
+    axs[0, 0].set_title('Informational Stiffness Proxy $I(z)$')
+    axs[0, 0].set_ylabel('arb.')
+    axs[0, 0].grid(True, alpha=0.3)
+
+    axs[0, 1].plot(out['z'], out['psi_shred'])
+    axs[0, 1].axhline(np.pi/2, ls='--', c='r', alpha=0.6, label=r'$\pi/2$ (unitary tunnel point)')
+    axs[0, 1].invert_xaxis()
+    axs[0, 1].set_title('Complex-Wick Shredding Phase $\\psi_{shred}$')
+    axs[0, 1].set_ylabel('rad')
+    axs[0, 1].legend()
+    axs[0, 1].grid(True, alpha=0.3)
+
+    axs[1, 0].plot(out['z'], out['n_topological'])
+    axs[1, 0].invert_xaxis()
+    axs[1, 0].set_title('Topological Quantum Number Proxy $n(z)$')
+    axs[1, 0].set_xlabel('Redshift z')
+    axs[1, 0].set_ylabel('n')
+    axs[1, 0].grid(True, alpha=0.3)
+
+    axs[1, 1].plot(out['z'], out['vacuum_discord_bits'], label='vacuum discord anchor')
+    axs[1, 1].invert_xaxis()
+    axs[1, 1].set_title('Vacuum Discord Anchor')
+    axs[1, 1].set_xlabel('Redshift z')
+    axs[1, 1].set_ylabel('bits')
+    axs[1, 1].legend()
+    axs[1, 1].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig("sim6_v16_ultimate_diagnostics.png", dpi=150)
+    print("Saved sim6_v16_ultimate_diagnostics.png")
+
+    # 6) Cosmology summary
     plt.figure(figsize=(10,6))
     plt.subplot(2,1,1)
     plt.plot(out['z'], out['H_km_s_Mpc'])
@@ -1074,13 +1162,13 @@ def main():
     plt.savefig("sim6_v16_cosmo_summary.png", dpi=150)
     print("Saved sim6_v16_cosmo_summary.png")
 
-    # 6) Run local Sim 5 sandboxes
+    # 7) Run local Sim 5 sandboxes
     print("Running Sim 5 v1 (local Ω-dynamics + metabolic inequality)...")
     run_sim5_dynamics()
     print("Running Sim 5 v3.4-style (emergent gravity + GIF)...")
     run_sim5_v34_dynamics()
 
-    # 7) Run Sim 3 (dynamic Planck length & causality band)
+    # 8) Run Sim 3 (dynamic Planck length & causality band)
     print("Running Sim 3 (dynamic Planck length & disformal causality band)...")
     run_sim3_disformal(RUN_DYNAMIC=True)
     print("Sim 3 complete.")
