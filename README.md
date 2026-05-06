@@ -43,6 +43,19 @@ The following simulations are included:
     *   *Goal*: Provide a robust, end-to-end timeline from universe inception through late-time heat-death behavior.
     *   *Features*: Integrates expansion history across radiation/matter/Λ eras, tracks horizon growth, temperature cooling, and entropy/information proxies, and emits checkpoint reports for key transitions.
 
+
+## Native Pipeline Sandbox
+
+A dependency-light C++20 sandbox is available under `cpp/omega_pipeline/` for experimenting with the requested low-latency ingestion and scoring architecture. It includes a Yellowstone-style binary account update adapter, an SPSC ring buffer, AVX-512-capable constant-product route evaluation with scalar fallback, latency-aware reserve projection, and an XDNA-ready survivability scorer interface.
+
+Build and run the checks with:
+
+```bash
+cmake -S cpp/omega_pipeline -B /tmp/omega_pipeline_build
+cmake --build /tmp/omega_pipeline_build
+ctest --test-dir /tmp/omega_pipeline_build --output-on-failure
+```
+
 ## The Paper
 
 The theoretical basis for these simulations can be found in:
