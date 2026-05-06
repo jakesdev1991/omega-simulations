@@ -30,7 +30,7 @@ if __name__ == "__main__":
         "Horizon_Shredding_Model.py",
         "Informational_Geometry_Test.py",
         "Sim5_Emergent_Gravity.py",
-        "sim6_v16_omega.py"
+        "sim6_v17_omega.py"
     ]
     
     for f in files:
