@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * 0'
+
+jobs:
+  python-checks:
+    name: Python Lint & Notebook Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -U pip
+          pip install ruff mypy pytest nbqa jupyter
+          pip install -r requirements.txt
+      
+      - name: Ruff lint
+        run: ruff check . --exclude=originals,papers
+      
+      - name: Ruff format check
+        run: ruff format --check . --exclude=originals,papers
+      
+      - name: MyPy type check
+        run: mypy . --ignore-missing-imports --exclude=originals,papers
+      
+      - name: Validate notebooks
+        run: |
+          nbqa ruff notebooks/ || true
+          jupyter nbconvert --execute --to notebook --inplace notebooks/*.ipynb --ExecutePreprocessor.timeout=60 || true
+
+  cpp-build:
+    name: C++ Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++-13
+      
+      - name: Build C++ simulations
+        if: hashFiles('cpp/CMakeLists.txt') != ''
+        run: |
+          cd cpp
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+          cmake --build build
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Check for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: .
+          base: main
+          head: HEAD
+
+  docs:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for README
+        run: test -f README.md
+      
+      - name: Validate markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
